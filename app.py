@@ -1,7 +1,8 @@
 import streamlit as st
 import math
 from collections import Counter
-import matplotlib.pyplot as plt
+import pandas as pd
+import altair as alt
 
 # Configure page
 st.set_page_config(
@@ -10,9 +11,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
-# Apply dark theme
-plt.style.use('dark_background')
 
 # ============================================
 # CALCULATOR FUNCTIONS
@@ -113,20 +111,27 @@ def plot_distribution(dist: Counter, title: str = ''):
     ys = [dist[x] for x in xs]
     mean, std_dev = calculate_stats(dist)
     
-    fig, ax = plt.subplots(figsize=(10, 5))
-    ax.bar(xs, ys, color='#1f77b4', alpha=0.8)
-    ax.axvspan(mean - std_dev, mean + std_dev, alpha=0.15, color='#00ff00', label='±1 SD')
-    ax.axvspan(mean - 2*std_dev, mean + 2*std_dev, alpha=0.08, color='#00ff00', label='±2 SD')
-    ax.axvline(x=mean, color='#ff6b6b', linestyle='--', linewidth=2, label=f'Mean: {mean:.2f}')
+    df = pd.DataFrame({
+        'Damage': xs,
+        'Probability': ys
+    })
     
-    ax.set_xlabel('Damage', color='#ffffff')
-    ax.set_ylabel('Probability', color='#ffffff')
-    ax.set_title(title, color='#ffffff')
-    ax.tick_params(colors='#ffffff')
-    ax.grid(True, axis='y', linestyle='--', alpha=0.2, color='#666666')
-    ax.legend(facecolor='#1a1a1a', edgecolor='#ffffff')
+    bars = alt.Chart(df).mark_bar(color='#4472C4').encode(
+        x='Damage:Q',
+        y='Probability:Q'
+    )
     
-    return fig
+    mean_line = alt.Chart(pd.DataFrame({'Mean': [mean]})).mark_vline(
+        color='#FF6B6B', strokeDash=[5, 5]
+    ).encode(x='Mean:Q')
+    
+    chart = (bars + mean_line).properties(
+        width=600,
+        height=300,
+        title=title
+    ).interactive()
+    
+    return chart
 
 def compute_attack_damage_distribution(dice_expr: str, attack_bonus: int, ac: int, advantage: str = 'normal', crit_type: str = 'normal') -> tuple:
     dice_list, bonus = parse_dice(dice_expr)
@@ -260,8 +265,8 @@ with tab1:
             with col2:
                 st.metric("Std Deviation", f"{std_dev:.2f}")
             
-            fig = plot_distribution(dist, f"Damage distribution for {spell_dice} vs DC {spell_dc} (save bonus {mod}, {spell_advantage})")
-            st.pyplot(fig)
+            chart = plot_distribution(dist, f"Damage distribution for {spell_dice} vs DC {spell_dc} (save bonus {mod}, {spell_advantage})")
+            st.altair_chart(chart, use_container_width=True)
             
         except ValueError as e:
             st.error(f"Error: {e}")
@@ -308,11 +313,12 @@ with tab2:
             with col3:
                 st.metric("Avg Damage (overall)", f"{avg_overall:.2f}")
             
-            fig = plot_distribution(dist, f"Damage distribution for {attack_dice} vs AC {attack_ac}")
-            st.pyplot(fig)
+            chart = plot_distribution(dist, f"Damage distribution for {attack_dice} vs AC {attack_ac}")
+            st.altair_chart(chart, use_container_width=True)
             
         except ValueError as e:
             st.error(f"Error: {e}")
 
 st.markdown("---")
 st.markdown("Built for D&D 5th Edition | [GitHub](https://github.com/yourusername/dnd-damage-calculator)")
+
