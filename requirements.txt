@@ -2,7 +2,3 @@
 streamlit==1.31.0
 altair>=4.0,<6.0
 pandas>=1.3,<3.0
-
-# We deliberately omit matplotlib and pillow because the app uses Altair for plotting
-# and does not rely on Matplotlib or Pillow. Removing these dependencies avoids
-# the Pillow build error noted in the Streamlit deployment logs.
