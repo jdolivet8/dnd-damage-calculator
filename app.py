@@ -124,7 +124,7 @@ def plot_distribution(dist: Counter, title: str = ''):
         y='Probability:Q'
     )
     
-    mean_line = alt.Chart(pd.DataFrame({'Mean': [mean]})).mark_vline(
+    mean_line = alt.Chart(pd.DataFrame({'Mean': [mean]})).mark_rule(
         color='#FF6B6B', strokeDash=[5, 5]
     ).encode(x='Mean:Q')
     
